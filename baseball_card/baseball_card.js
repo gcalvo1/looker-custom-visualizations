@@ -1,7 +1,7 @@
 looker.plugins.visualizations.add({
 	id: "baseball_card",
 	label: "Baseball Card",
-	
+
 	create: function(element,config) {
 
 		// Create a container element to let us center the text.
@@ -16,6 +16,7 @@ looker.plugins.visualizations.add({
 	updateAsync: function(data, element, config, queryResponse){
 
 		for(var row of data){
+
 			var player_name_object = row[queryResponse.fields.dimensions[0].name],
 	 	    	    player_name_html = LookerCharts.Utils.htmlForCell(player_name_object),
 			    player_name_text = LookerCharts.Utils.textForCell(player_name_object).replace(/\s+/g, '-'),
@@ -28,9 +29,23 @@ looker.plugins.visualizations.add({
 			    tertiary_team_color_object = row[queryResponse.fields.dimensions[4].name],
 			    tertiary_team_color_text = LookerCharts.Utils.textForCell(tertiary_team_color_object),
 			    player_img_object = row[queryResponse.fields.dimensions[5].name],
-			    player_img_text = LookerCharts.Utils.textForCell(player_img_object);
+			    player_img_text = LookerCharts.Utils.textForCell(player_img_object),
+		 	    measure_one_object  = row[queryResponse.fields.measures[0].name],
+			    measure_one_text = LookerCharts.Utils.textForCell(measure_one_object);
 		}
-		
+	
+		String.prototype.initCap = function () {
+   			return this.toLowerCase().replace(/(?:^|\s)[a-z]/g, function (m) {
+      			return m.toUpperCase();
+   			});
+		}
+	
+		var measureName = queryResponse.fields.measures[0].name.replace(/_/g, ' ').split(".").pop().initCap();
+ 		var names = document.getElementsByClassName("looker-vis-context-title-link ");
+		if(names.length > 0){
+			names[data.length - 1].innerText = measureName + ": " + measure_one_text;
+		}
+
 		var css = element.innerHTML = `
 			<style>
                 .card-container {
