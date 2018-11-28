@@ -120,10 +120,11 @@ looker.plugins.visualizations.add({
                 .card-`+ player_name_text + ` figcaption {
                 position: absolute;
 		padding-top: 5px;
+		padding-left: 5px;
                 bottom: -10px;
                 right: 0;
-                width: 66%;
-                height: 34px;
+                min-width: 66%;
+                min-height: 34px;
                 text-align: center;
                 font-size: 100%;
                 background: ` + secondary_team_color_text  +  ` ;
