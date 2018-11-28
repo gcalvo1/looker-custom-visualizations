@@ -6,6 +6,12 @@ looker.plugins.visualizations.add({
 			label: "Custom Measure Name",
 			type: "string",
 			default: "",
+			order: 2
+		},
+		measureTitle: {
+			label: "Measure Title",
+			type: "boolean",
+			default: false,
 			order: 1
 		}
 	},
@@ -49,15 +55,17 @@ looker.plugins.visualizations.add({
 		}
 	
 		//Edit Look tile title
-		var measureName = queryResponse.fields.measures[0].name.replace(/_/g, ' ').split(".").pop().initCap(),
- 		    customMeasureName = measureName;
-		if(config.customMeasureName){
-			customMeasureName = config.customMeasureName;
-		}
+		if(config.measureTitle) {
+			var measureName = queryResponse.fields.measures[0].name.replace(/_/g, ' ').split(".").pop().initCap(),
+ 		    	customMeasureName = measureName;
+			if(config.customMeasureName){
+				customMeasureName = config.customMeasureName;
+			}
 
- 		var names = document.getElementsByClassName("looker-vis-context-title-link ");
-		if(names.length > 0){
-			names[data.length - 1].innerText = customMeasureName + ": " + measure_one_text;
+	 		var names = document.getElementsByClassName("looker-vis-context-title-link ");
+			if(names.length > 0){
+				names[data.length - 1].innerText = customMeasureName + ": " + measure_one_text;
+			}
 		}
 
 		var css = element.innerHTML = `
