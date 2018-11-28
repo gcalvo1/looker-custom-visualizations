@@ -1,7 +1,14 @@
 looker.plugins.visualizations.add({
 	id: "baseball_card",
 	label: "Baseball Card",
-
+	options: {
+		customMeasureName: {
+			label: "Custom Measure Name",
+			type: "string",
+			default: "",
+			order: 1
+		}
+	},
 	create: function(element,config) {
 
 		// Create a container element to let us center the text.
@@ -19,7 +26,7 @@ looker.plugins.visualizations.add({
 
 			var player_name_object = row[queryResponse.fields.dimensions[0].name],
 	 	    	    player_name_html = LookerCharts.Utils.htmlForCell(player_name_object),
-			    player_name_text = LookerCharts.Utils.textForCell(player_name_object).replace(/\s+/g, '-'),
+			    player_name_text = LookerCharts.Utils.textForCell(player_name_object).replace(/\s+/g, '-').replace(/\./g,''),
 			    player_logo_object = row[queryResponse.fields.dimensions[1].name],
 			    player_logo_text = LookerCharts.Utils.textForCell(player_logo_object),
 			    primary_team_color_object = row[queryResponse.fields.dimensions[2].name],
@@ -33,17 +40,24 @@ looker.plugins.visualizations.add({
 		 	    measure_one_object  = row[queryResponse.fields.measures[0].name],
 			    measure_one_text = LookerCharts.Utils.textForCell(measure_one_object);
 		}
-	
+
+		//InitCap function	
 		String.prototype.initCap = function () {
    			return this.toLowerCase().replace(/(?:^|\s)[a-z]/g, function (m) {
       			return m.toUpperCase();
    			});
 		}
 	
-		var measureName = queryResponse.fields.measures[0].name.replace(/_/g, ' ').split(".").pop().initCap();
+		//Edit Look tile title
+		var measureName = queryResponse.fields.measures[0].name.replace(/_/g, ' ').split(".").pop().initCap(),
+ 		    customMeasureName = measureName;
+		if(config.customMeasureName){
+			customMeasureName = config.customMeasureName;
+		}
+
  		var names = document.getElementsByClassName("looker-vis-context-title-link ");
 		if(names.length > 0){
-			names[data.length - 1].innerText = measureName + ": " + measure_one_text;
+			names[data.length - 1].innerText = customMeasureName + ": " + measure_one_text;
 		}
 
 		var css = element.innerHTML = `
@@ -55,6 +69,8 @@ looker.plugins.visualizations.add({
 
                 .card-`+ player_name_text + `{
                 position: relative;
+		max-width: 243px;
+		max-height: 350px;
                 height: 100%;
                 width: 100%;
                 border: 15px ` + primary_team_color_text  + ` solid;
@@ -125,12 +141,15 @@ looker.plugins.visualizations.add({
                 border-bottom: 17px solid black;
                 border-left: 17px solid transparent;
                 }
+		.name-`+ player_name_text + ` a {
+		color: ` +  tertiary_team_color_text + ` !important;
+		}
             </style>
 			
 			<figure class="card-`+ player_name_text  +`">
                     		<img class="team_logo" src="` + player_logo_text  + `" />
                     		<img class="player" src="` + player_img_text  + `" />
-                    		<figcaption class="name">` + player_name_html + `</figcaption>
+                    		<figcaption class="name-`+ player_name_text +`">` + player_name_html + `</figcaption>
                 	</figure>
 		`;	
 	}
