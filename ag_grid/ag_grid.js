@@ -206,14 +206,11 @@ looker.plugins.visualizations.add({
 			rowData.push(currObj);			
 		};
 
-		//var css = element.innerHTML = `
-
-  		//	<div id="myGrid" style="height: 100%;width:100%;" class="ag-theme-balham"></div>
-		//`;
+		var randId = "myGrid" +  Math.floor((Math.random() * 10000) + 1).toString();
 
 		var body = d3.select('#parentGrid')
 				.append('div')
-				.attr('id','myGrid')
+				.attr('id',randId)
 				.attr('class',config.theme)
 				.style('width','100%')
 				.style('height','100%');
@@ -254,7 +251,7 @@ looker.plugins.visualizations.add({
     		};
 
   		// lookup the container we want the Grid to use
-  		var eGridDiv = document.querySelector('#myGrid');
+  		var eGridDiv = document.querySelector('#'+randId);
         
 		//Set License Key
 		agGrid.LicenseManager.setLicenseKey("Evaluation_License-_Not_For_Production_Valid_Until_25_April_2019__MTU1NjE0NjgwMDAwMA==5095db85700c871b2d29d9537cd451b3");
