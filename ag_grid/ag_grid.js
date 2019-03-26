@@ -32,6 +32,13 @@ looker.plugins.visualizations.add({
 			section: " Display",
                         order: 4
                 },
+                rowDrag: {
+                        label: "Row Drag",
+                        type: "boolean",
+                        default: false,
+                        section: " Display",
+                        order: 5
+                },
 		groupable: {
 			label: "Groupable",
                         type: "boolean",
@@ -155,7 +162,11 @@ looker.plugins.visualizations.add({
 			//Get Column Names
 			headers.forEach(function(header){
 				var headerClean = header.substr(header.indexOf('.')+1).split("_").join(" ").initCap();
-				//Add row group here
+				var rowDrag = false;
+				if(headerCount == 0 && config.rowDrag){
+					rowDrag = true;
+				}
+
 				if(headerCount == 0 && config.groupable){
 					columnDefs.push(
                                 		{ headerName: headerClean, 
@@ -163,6 +174,7 @@ looker.plugins.visualizations.add({
 						  sortable: config.sortable, 
 					  	  filter: config.filterable, 
 						  valueFormatter: numberFormatter, 
+						  rowDrag: rowDrag,
 						  rowGroup: true, 
 						  hide: true });
 	
@@ -172,6 +184,7 @@ looker.plugins.visualizations.add({
 						  	field: headerClean, 
 						  	sortable: config.sortable, 
 						  	filter: config.filterable,
+							rowDrag: rowDrag,
 						  	valueFormatter: numberFormatter, 
 						  	aggFunc: 'sum' });
 					} else {
@@ -180,6 +193,7 @@ looker.plugins.visualizations.add({
                                                         field: headerClean,
                                                         sortable: config.sortable,
                                                         filter: config.filterable,
+							rowDrag: rowDrag,
                                                         valueFormatter: numberFormatter,
                                                         });						
 					}
@@ -206,11 +220,9 @@ looker.plugins.visualizations.add({
 			rowData.push(currObj);			
 		};
 
-		var randId = "myGrid" +  Math.floor((Math.random() * 10000) + 1).toString();
-
 		var body = d3.select('#parentGrid')
 				.append('div')
-				.attr('id',randId)
+				.attr('id','myGrid')
 				.attr('class',config.theme)
 				.style('width','100%')
 				.style('height','100%');
@@ -238,7 +250,9 @@ looker.plugins.visualizations.add({
       			columnDefs: columnDefs,
       			rowData: rowData,
 			animateRows: true,
+			multiSortKey: 'ctrl',
 			rowSelection: 'multiple',
+			rowDragManaged: true,
 			defaultGroupSortComparator: function(nodeA, nodeB) {
         			if (nodeA.key < nodeB.key) {
             				return -1;
@@ -251,7 +265,7 @@ looker.plugins.visualizations.add({
     		};
 
   		// lookup the container we want the Grid to use
-  		var eGridDiv = document.querySelector('#'+randId);
+  		var eGridDiv = document.querySelector('#myGrid');
         
 		//Set License Key
 		agGrid.LicenseManager.setLicenseKey("Evaluation_License-_Not_For_Production_Valid_Until_25_April_2019__MTU1NjE0NjgwMDAwMA==5095db85700c871b2d29d9537cd451b3");
