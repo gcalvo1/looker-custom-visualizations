@@ -36,15 +36,22 @@ looker.plugins.visualizations.add({
 			label: "Groupable",
                         type: "boolean",
                         default: true,
-			section: " Display",
-                        order: 5		
+			section: "Row Grouping",
+                        order: 1		
 		},
                 gde: {
                         label: "Group by Default",
                         type: "boolean",
                         default: true,
-			section: " Display",
-                        order: 6
+			section: "Row Grouping",
+                        order: 2
+                },
+                rowGroupLabel: {
+                        label: "Group Label",
+                        type: "string",
+                        default: "",
+                        section: "Row Grouping",
+                        order: 3
                 },
 		columnHeader: {
 			label: "Column Headers",
@@ -111,6 +118,8 @@ looker.plugins.visualizations.add({
 		var columnDefs = [];
 		var headers = Object.keys(data[0]);
 		var headerCount = 0;
+		var measureCount = queryResponse.fields.measures.length;
+		var measureStartCol = headers.length - measureCount;
 		
 		if(config.columnHeader){
 			//Get Column Names
@@ -149,14 +158,31 @@ looker.plugins.visualizations.add({
 				//Add row group here
 				if(headerCount == 0 && config.groupable){
 					columnDefs.push(
-                                		{ headerName: headerClean, field: headerClean, sortable: config.sortable, filter: config.filterable, rowGroup: true, hide: true }
-                        		);
+                                		{ headerName: headerClean, 
+						  field: headerClean, 
+						  sortable: config.sortable, 
+					  	  filter: config.filterable, 
+						  valueFormatter: numberFormatter, 
+						  rowGroup: true, 
+						  hide: true });
 	
-				} else {
-					columnDefs.push(
-						{ headerName: headerClean, field: headerClean, sortable: config.sortable, filter: config.filterable, aggFunc: 'sum' }
-					);
-				}
+				} else if(headerCount >= measureStartCol) {
+						columnDefs.push(
+							{ headerName: headerClean, 
+						  	field: headerClean, 
+						  	sortable: config.sortable, 
+						  	filter: config.filterable,
+						  	valueFormatter: numberFormatter, 
+						  	aggFunc: 'sum' });
+					} else {
+						columnDefs.push(
+                                                        { headerName: headerClean,
+                                                        field: headerClean,
+                                                        sortable: config.sortable,
+                                                        filter: config.filterable,
+                                                        valueFormatter: numberFormatter,
+                                                        });						
+					}
 				headerCount++;
 			});
 		} 
@@ -192,26 +218,20 @@ looker.plugins.visualizations.add({
 				.style('width','100%')
 				.style('height','100%');
 
-		// specify the columns
-    		//var columnDefs = [
-      		//	{headerName: "Make", field: "make", sortable: config.sortable, filter: config.filterable },
-    		//];
-
     		// specify the data
-    		//var rowData = [
-      		//	{make: "Toyota", model: "Celica", price: 35000},
-    		//];
 		var expand = -1;
     		if(config.gde){
 			expand = 0;
 		}
+
+		var firstHeaderClean = headers[0].substr(headers[0].indexOf('.')+1).split("_").join(" ").initCap();
 		// let the grid know which columns and what data to use
     		var gridOptions = {
 			groupSelectsChildren: true,
 			groupDefaultExpanded: expand,
 			autoGroupColumnDef: {
-        			headerName: 'League',
-        			field: 'League',
+        			headerName: config.rowGroupLabel,
+        			field: firstHeaderClean,
         			width: 250,
         			editable: false,
     			},
