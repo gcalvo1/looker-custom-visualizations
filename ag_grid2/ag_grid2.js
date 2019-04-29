@@ -283,7 +283,7 @@ looker.plugins.visualizations.add({
 
 						var headerClean = header.substr(header.indexOf('.')+1).split("_").join(" ").initCap();
 						if(row[header].rendered){
-							if(row[header].rendered.charAt(0) == '$'){
+							if(row[header].rendered.charAt(0) == '$' || row[header].rendered.charAt(1) == '$' ){
 								currObj[headerClean] = row[header].rendered;	
 							} else {
 								currObj[headerClean] = row[header].value;
