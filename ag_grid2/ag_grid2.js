@@ -33,7 +33,7 @@ looker.plugins.visualizations.add({
                         order: 7
                 },
                 sizeColToFit: {
-                        label: "Size Columns to Fit",
+                        label: "Size Columns to Fit Screen",
                         type: "boolean",
                         default: false,
                         section: " Display",
@@ -89,6 +89,20 @@ looker.plugins.visualizations.add({
                         section: "Column Headers",
                         order: 3
 		},
+		autoSizeColumns: {
+			label: "Auto-Size Columns",
+			type: "boolean",
+			default: true,
+			section: "Column Headers",
+			order: 6
+		},
+		sizeColToFit: {
+                        label: "Size Columns to Fit Screen",
+                        type: "boolean",
+                        default: false,
+                        section: "Column Headers",
+                        order: 5
+                },
 		columnGroupNames: {
 			label: "Column Group Names",
 			type: "string",
@@ -110,6 +124,12 @@ looker.plugins.visualizations.add({
 	},
 
 	update: function(data, element, config, queryResponse){
+
+		element.innerHTML = `<style>
+    				.ag-row-group {
+        				font-weight: bold;
+    				}
+			</style>`;
 
 		$('.myGrid').remove();	
 		// Create an element to contain the text.
@@ -195,7 +215,7 @@ looker.plugins.visualizations.add({
 								  field: key,
 								  sortable: config.sortable,
 								  filter: config.filterable,
-								  rowGroup: config.rowGroup 
+								  rowGroup: config.groupable 
 								});
 						});
 					}
@@ -216,8 +236,8 @@ looker.plugins.visualizations.add({
 									  filter: config.filterable, 
 									  valueFormatter: numberFormatter, 
 									  rowDrag: rowDrag,
-									  rowGroup: config.rowGroup, 
-									hide: true });
+									  rowGroup: false, 
+									  hide: false });
 							} else {
 							//Dimensions
 								columnDefs.push(
@@ -226,7 +246,7 @@ looker.plugins.visualizations.add({
 									  sortable: config.sortable,
 									  filter: config.filterable,
 									  rowDrag: rowDrag,
-									  rowGroup: config.rowGroup,
+									  rowGroup: true,
 									  hide: true });
 							}
 			
@@ -318,12 +338,23 @@ looker.plugins.visualizations.add({
 			
 			// let the grid know which columns and what data to use
 			var gridOptions = {
+				onGridReady: function() {
+                			var allColumnIds = [];
+					gridOptions.columnApi.getAllColumns().forEach(function(column) {
+        					allColumnIds.push(column.colId);
+    					});
+					if(config.autoSizeColumns){
+    						gridOptions.columnApi.autoSizeColumns(allColumnIds);	
+					} else if(config.sizeColToFit){
+						gridOptions.api.sizeColumnsToFit();
+					}
+				},
 				groupSelectsChildren: true,
 				groupDefaultExpanded: expand,
 				autoGroupColumnDef: {
 					headerName: config.rowGroupLabel,
-					field: firstHeaderClean,
-					width: 250,
+					//field: firstHeaderClean,
+					//width: 250,
 					editable: false,
 				},
 				defaultColDef: {
@@ -337,7 +368,6 @@ looker.plugins.visualizations.add({
 				enableRangeSelection: true,
 				rowDragManaged: true,
 				suppressAggFuncInHeader: true,
-				//onFirstDataRendered: onFirstDataRendered,
 				defaultGroupSortComparator: function(nodeA, nodeB) {
 					if (nodeA.key < nodeB.key) {
 						return -1;
@@ -370,6 +400,6 @@ function numberFormatter(params) {
 	}
 }
 
-function onFirstDataRendered(params) {
+function sizeColumnsToFit(params) {
     params.api.sizeColumnsToFit();
 }
