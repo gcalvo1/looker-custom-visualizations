@@ -123,19 +123,22 @@ looker.plugins.visualizations.add({
 
 	create: function(element,config) {
 		var rand = Math.floor(Math.random() * 1000000);
-		this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","parentGrid-" + rand);
+		this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","parentGrid");
 	},
 
 	update: function(data, element, config, queryResponse){
 		//Allow multiple grids on a dashboard
 		var classRand = 0,
 		    found = false;
+
 		$('div').each(function(){
 			if($(this).attr('class')){
-   				if( $(this).attr('class').match(/parentGrid/) ) {
-					classRand = $(this).attr('class').split('-')[1];
+				if($(this).attr('class').match(/myGrid/) && !found){
+                                        classRand = $(this).attr('class').split('-')[1].split(' ')[0];
 					found = true;
-   				}
+				} else if( $(this).attr('class').match(/parentGrid/)) {
+						classRand = $(this).attr('class').split('-')[1];
+   					}
 			}
 		});
 
@@ -145,19 +148,19 @@ looker.plugins.visualizations.add({
     				}
 			</style>`;
 
-		$('.parentGrid-' + classRand).remove();	
+		$('.parentGrid').remove();	
 		// Create an element to contain the text.
 
 		//this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","myGrid");
-		this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","parentGrid-" + classRand);
-		$('.parentGrid-' + classRand).width('100%');
-                $('.parentGrid-' + classRand).height('100%');
+		this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","parentGrid");
+		$('.parentGrid').width('100%');
+                $('.parentGrid').height('100%');
 
 		//var rand = Math.floor(Math.random() * 1000000);
-		$('.parentGrid-' + classRand).append('<div class="myGrid-' + classRand + '"></div>');
-		$('.myGrid-' + classRand).addClass('ag-theme-balham');
-		$('.myGrid' + classRand).width('100%');
-		$('.myGrid-' + classRand).height('100%');
+		$('.parentGrid').append('<div class="myGrid"></div>');
+		$('.myGrid').addClass('ag-theme-balham');
+		$('.myGrid').width('100%');
+		$('.myGrid').height('100%');
 
 		$('head').append('<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">');
 		$('head').append('<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-balham.css">');
@@ -174,6 +177,14 @@ looker.plugins.visualizations.add({
                 }
 
 		if(data.length > 0){
+			var headerLabels = [];
+			queryResponse.fields.dimensions.forEach(function(dimension){
+				headerLabels.push(dimension.label_short);
+			});
+			queryResponse.fields.measures.forEach(function(measure){
+                                headerLabels.push(measure.label_short);
+                        });
+
 			var columnDefs = [];
 			var headers = Object.keys(data[0]);
 			var headerCount = 0;
@@ -218,9 +229,8 @@ looker.plugins.visualizations.add({
 					var rowDrag = false;
 					var pinDir = false;
 					var jsonField = false;
-
 					var value = data[0][header].value;
-					if(value != null && (typeof value === 'string' || value instanceof String)){
+					if(value != null && (typeof value === 'string' || value instanceof String) && config.jsonParse){
 						if(value.substring(0,2) == '{"'){
 							var obj = JSON.parse(value);
 							var objKeys = Object.keys(obj);
@@ -228,7 +238,7 @@ looker.plugins.visualizations.add({
 						}
 					}
 
-					if(jsonField){
+					if(jsonField && config.jsonParse){
 						objKeys.forEach(function(key){
 							columnDefs.push(
 								{ headerName: key,
@@ -238,6 +248,7 @@ looker.plugins.visualizations.add({
 								  rowGroup: config.groupable 
 								});
 						});
+						headerCount++;
 					}
 					else { if(headerCount == 0 && config.rowDrag){
 							rowDrag = true;
@@ -250,7 +261,7 @@ looker.plugins.visualizations.add({
 							//Measure
 							if(data[0][header].rendered){
 								columnDefs.push(
-									{ headerName: headerClean, 
+									{ headerName: headerLabels[headerCount], 
 									  field: headerClean, 
 									  sortable: config.sortable, 
 									  filter: config.filterable, 
@@ -261,7 +272,8 @@ looker.plugins.visualizations.add({
 							} else {
 							//Dimensions
 								columnDefs.push(
-									{ headerName: headerClean,
+									{ //headerName: headerClean,
+								   	  headerName: headerLabels[headerCount],
 									  field: headerClean,
 									  sortable: config.sortable,
 									  filter: config.filterable,
@@ -272,7 +284,8 @@ looker.plugins.visualizations.add({
 			
 						} else if(headerCount >= measureStartCol) {
 								columnDefs.push(
-									{ headerName: headerClean, 
+									{ //headerName: headerClean, 
+									headerName: headerLabels[headerCount],
 									field: headerClean, 
 									sortable: config.sortable, 
 									filter: config.filterable,
@@ -282,7 +295,8 @@ looker.plugins.visualizations.add({
 									aggFunc: 'sum' });
 							} else {
 								columnDefs.push(
-									{ headerName: headerClean,
+									{ //headerName: headerClean,
+									headerName: headerLabels[headerCount],
 									field: headerClean,
 									sortable: config.sortable,
 									filter: config.filterable,
@@ -313,7 +327,7 @@ looker.plugins.visualizations.add({
 						}
 					}
 					
-					if(jsonField){
+					if(jsonField && config.jsonParse){
 						var count = 0;
 						objKeys.forEach(function(key){
 							currObj[key] = objVal[count];
@@ -397,7 +411,7 @@ looker.plugins.visualizations.add({
 
 			//var numGrids = $('.myGrid').length-1;
 			// lookup the container we want the Grid to use
-			var eGridDiv = document.querySelectorAll('.myGrid-' + classRand)[0];
+			var eGridDiv = document.querySelectorAll('.myGrid')[0];
 		
 			//Set License Key
 			agGrid.LicenseManager.setLicenseKey("Evaluation_License-_Not_For_Production_Valid_Until_25_April_2019__MTU1NjE0NjgwMDAwMA==5095db85700c871b2d29d9537cd451b3");
