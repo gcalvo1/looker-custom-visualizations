@@ -1,6 +1,6 @@
 looker.plugins.visualizations.add({
-	id: "ag_grid2",
-	label: "ag-Grid2",
+	id: "hg_grid",
+	label: "hg-Grid",
 	options: {
 		theme: {
 			label: "Theme",
@@ -120,10 +120,24 @@ looker.plugins.visualizations.add({
                         order: 3
                 },
 	},
+
 	create: function(element,config) {
+		var rand = Math.floor(Math.random() * 1000000);
+		this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","parentGrid-" + rand);
 	},
 
 	update: function(data, element, config, queryResponse){
+		//Allow multiple grids on a dashboard
+		var classRand = 0,
+		    found = false;
+		$('div').each(function(){
+			if($(this).attr('class')){
+   				if( $(this).attr('class').match(/parentGrid/) ) {
+					classRand = $(this).attr('class').split('-')[1];
+					found = true;
+   				}
+			}
+		});
 
 		element.innerHTML = `<style>
     				.ag-row-group {
@@ -131,12 +145,19 @@ looker.plugins.visualizations.add({
     				}
 			</style>`;
 
-		$('.myGrid').remove();	
+		$('.parentGrid-' + classRand).remove();	
 		// Create an element to contain the text.
-		this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","myGrid");
-		$('.myGrid').addClass('ag-theme-balham');
-		$('.myGrid').width('100%');
-		$('.myGrid').height('100%');
+
+		//this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","myGrid");
+		this._textElement = element.appendChild(document.createElement("div")).setAttribute("class","parentGrid-" + classRand);
+		$('.parentGrid-' + classRand).width('100%');
+                $('.parentGrid-' + classRand).height('100%');
+
+		//var rand = Math.floor(Math.random() * 1000000);
+		$('.parentGrid-' + classRand).append('<div class="myGrid-' + classRand + '"></div>');
+		$('.myGrid-' + classRand).addClass('ag-theme-balham');
+		$('.myGrid' + classRand).width('100%');
+		$('.myGrid-' + classRand).height('100%');
 
 		$('head').append('<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">');
 		$('head').append('<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-balham.css">');
@@ -144,7 +165,6 @@ looker.plugins.visualizations.add({
 		$('head').append('<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-blue.css">');
 		$('head').append('<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-material.css">');
 		$('head').append('<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-bootstrap.css">');
-
 
 		//InitCap function
                 String.prototype.initCap = function () {
@@ -316,17 +336,13 @@ looker.plugins.visualizations.add({
 				rowData.push(currObj);
 			};
 
-			var btn = d3.selectAll('.parentGrid')
-				    .append('button')
-				    .attr('id','export-btn')
-
-			var body = d3.selectAll('.parentGrid')
+			/*var body = d3.selectAll('.parentGrid')
 				    .append('div')
 				    .attr('class','myGrid ' +  config.theme)
 				    //.attr('class',config.theme)
 				    .style('width','100%')
 				    .style('height','100%');
-
+			*/
 			// specify the data
 			var expand = -1;
 			if(config.gde){
@@ -381,7 +397,7 @@ looker.plugins.visualizations.add({
 
 			//var numGrids = $('.myGrid').length-1;
 			// lookup the container we want the Grid to use
-			var eGridDiv = document.querySelectorAll('.myGrid')[0];
+			var eGridDiv = document.querySelectorAll('.myGrid-' + classRand)[0];
 		
 			//Set License Key
 			agGrid.LicenseManager.setLicenseKey("Evaluation_License-_Not_For_Production_Valid_Until_25_April_2019__MTU1NjE0NjgwMDAwMA==5095db85700c871b2d29d9537cd451b3");
