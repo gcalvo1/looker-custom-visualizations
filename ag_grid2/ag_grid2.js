@@ -158,7 +158,7 @@ looker.plugins.visualizations.add({
 
 		//var rand = Math.floor(Math.random() * 1000000);
 		$('.parentGrid').append('<div class="myGrid"></div>');
-		$('.myGrid').addClass('ag-theme-balham');
+		$('.myGrid').addClass(config.theme);
 		$('.myGrid').width('100%');
 		$('.myGrid').height('100%');
 
