@@ -318,10 +318,11 @@ looker.plugins.visualizations.add({
 			}
 
 			var rowData = [];
-
+			var exportFileName = '';
 			//Get Data
 			for(var row of data){
 				var currObj = {};
+				var headerCount = 0;
 				headers.forEach(function(header) {
 					var value = row[header].value;
 					jsonField = false;
@@ -350,20 +351,23 @@ looker.plugins.visualizations.add({
 								currObj[headerClean] = row[header].value;
 							}
 						} else {
+							if(headerCount == 0){
+								exportFileName = row[header].value;
+							}
 							currObj[headerClean] = row[header].value;
 						}
 					}
+					headerCount++;
 				});
 				rowData.push(currObj);
 			};
 
-			/*var body = d3.selectAll('.parentGrid')
-				    .append('div')
-				    .attr('class','myGrid ' +  config.theme)
-				    //.attr('class',config.theme)
-				    .style('width','100%')
-				    .style('height','100%');
-			*/
+			var today = new Date();
+			var dd = String(today.getDate()).padStart(2, '0');
+			var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+			var yyyy = today.getFullYear();
+			today = yyyy + '-' + mm + '-' + dd;
+			exportFileName = exportFileName + '_' + today;
 			// specify the data
 			var expand = -1;
 			if(config.gde){
@@ -405,6 +409,22 @@ looker.plugins.visualizations.add({
 				enableRangeSelection: true,
 				rowDragManaged: true,
 				suppressAggFuncInHeader: true,
+				getContextMenuItems: function (params) {
+    					var result = [
+					'copy',
+					'separator',
+        				{
+            					name: 'CSV Export',
+            					action: function() {
+                					var params = {
+                        					fileName: exportFileName
+                					};
+                					gridOptions.api.exportDataAsCsv(params);
+            					},
+						icon: '<img src="https://png.pngtree.com/svg/20170726/5b0546bf9c.png" width="16px"/>'
+        				}];
+    					return result;
+				},
 				defaultGroupSortComparator: function(nodeA, nodeB) {
 					if (nodeA.key < nodeB.key) {
 						return -1;
