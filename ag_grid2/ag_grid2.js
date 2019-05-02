@@ -233,7 +233,14 @@ looker.plugins.visualizations.add({
 					if(value != null && (typeof value === 'string' || value instanceof String) && config.jsonParse){
 						if(value.substring(0,2) == '{"'){
 							var obj = JSON.parse(value);
-							var objKeys = Object.keys(obj);
+							//Remove bill to and ship to properties
+							for(var i in obj) {
+								var propertyShort = i.substring(0,8);
+								if(propertyShort == 'bill_to_' || propertyShort == 'ship_to_' || i == "shipping_same_as_billing"){
+									delete obj[i];
+								}
+							}
+							objKeys = Object.keys(obj),
 							jsonField = true;
 						}
 					}
