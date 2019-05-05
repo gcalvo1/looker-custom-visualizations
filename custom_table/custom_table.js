@@ -18,6 +18,49 @@ looker.plugins.visualizations.add({
                         section: "   Display",
                         order: 2
                 },
+		borderColor: {
+                        label: "Border Color",
+                        type: "array",
+                        display: "colors",
+                        default: ["#c0c0c0"],
+                        section: "   Display",
+                        order: 3
+                },
+		firstRowBold: {
+                        label: "First Row Bold",
+                        type: "boolean",
+                        default: false,
+                        section: "   Display",
+                        order: 4
+                },
+		colorPercents: {
+                        label: "Color Percents",
+                        type: "boolean",
+                        default: true,
+                        section: "   Display",
+                        order: 5
+                },
+		firstColRowColor: {
+                        label: "First Column Has Row Color",
+                        type: "boolean",
+                        default: false,
+                        section: "   Display",
+                        order: 6
+                },
+		rightAlignAfterColumn: {
+                        label: "Right Align After Column",
+                        type: "string",
+                        default: "2",
+                        section: "   Display",
+                        order: 7
+                },
+		customCss: {
+                        label: "Custom CSS",
+                        type: "string",
+                        default: "",
+                        section: "   Display",
+                        order: 8
+                },
 		title: {
 			label: "Title",
 			type: "boolean",
@@ -131,12 +174,8 @@ looker.plugins.visualizations.add({
 	update: function(data, element, config, queryResponse){
 		//Allow multiple grids on a dashboard
 		
-	/*	element.innerHTML = `<style>
-    				.ag-row-group {
-        				font-weight: bold;
-    				}
-			</style>`;
-		*/
+		element.innerHTML = '<style>' + config.customCss + '</style>';
+		
 		$('.parentGrid').remove();	
 		// Create an element to contain the text.
 
@@ -150,12 +189,14 @@ looker.plugins.visualizations.add({
 		$('.myGrid').width('100%');
 		$('.myGrid').height('100%');
 
-		//InitCap function
-                String.prototype.initCap = function () {
-                      return this.toLowerCase().replace(/(?:^|\s)[a-z]/g, function (m) {
-                      return m.toUpperCase();
-                      });
-                }
+		//Number formatter
+		function numberFormatter(params) {
+        		if(!isNaN(params) && params !== ''){
+                		return Math.floor(params).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+        		} else {
+                		return params;
+        		}
+		}
 
 		var subtitleCols = config.subtitleCols;
 		if(config.title){
@@ -203,14 +244,13 @@ looker.plugins.visualizations.add({
 			if(config.headers){
 				$('.myTable').append('<tr class="headerRow" style="background-color:' + config.headerBackgroundColor + ';"></tr>');
 				headerLabels.forEach(function(header){
-					$('.headerRow').append('<th style="text-align:left;color:' + config.headerTextColor + ';">' + header + '</th>');
+					$('.headerRow').append('<th class="columnHeader" style="text-align:left;color:' + config.headerTextColor + ';">' + header + '</th>');
 				});
 			}
 
 			//Add Rows
 			var rowCount = 1;	
 			for(var row of data){
-				console.log(rowCount % 2);
 				if(rowCount % 2 == 1){
 					$('.myTable').append('<tr id="row-' + rowCount + '" style="background-color:' + config.alternateRowColorOne + ';"></tr>');
 				} else {
@@ -218,30 +258,42 @@ looker.plugins.visualizations.add({
 				}
 				var headerCount = 1;
 				headers.forEach(function(header){
-					if(row[header].rendered){
-						$('#row-' + rowCount).append('<td style="text-align:right;color:;">' + row[header].rendered  + '</td>');		
-					} else if(headerCount <= dimensionCount){
-							$('#row-' + rowCount).append('<td style="text-align:left;color:;">' + row[header].value  + '</td>');	
-					       } else {
-							$('#row-' + rowCount).append('<td style="text-align:right;color:;">' + row[header].value  + '</td>');
-					       }
+					//if set, use first column value as row color
+					if(config.firstColRowColor && headerCount == 1){
+						$('#row-' + rowCount).css('background-color',row[header].value);
+					} else {
+						if(row[header].rendered){
+							$('#row-' + rowCount).append('<td style="text-align:right;color:;">' + row[header].rendered  + '</td>');		
+						} else if(headerCount <= dimensionCount){
+								if(rowCount > 1 && config.colorPercents && row[header].value.endsWith('%') && row[header].value.startsWith('-')){
+									$('#row-' + rowCount).append('<td style="text-align:left;color:red;">' + numberFormatter(row[header].value)  + '</td>');
+								} else if(rowCount > 1 && config.colorPercents && row[header].value.endsWith('%') && !row[header].value.startsWith('-')) {
+									$('#row-' + rowCount).append('<td style="text-align:left;color:green;">' + numberFormatter(row[header].value)  + '</td>');
+								} else {
+									$('#row-' + rowCount).append('<td style="text-align:left;color:;">' + numberFormatter(row[header].value)  + '</td>');
+								}
+							} else {
+								$('#row-' + rowCount).append('<td style="text-align:right;color:;">' + row[header].value  + '</td>');
+					 	    }
+					}
+					if(headerCount >= config.rightAlignAfterColumn){
+						$('#row-' + rowCount + ' td:gt(' + config.rightAlignAfterColumn + ')').css('text-align','right');
+					}
+					//Add config for this
+					if(config.firstColRowColor){
+						$('#row-' + rowCount + ' td').eq(0).css('border-right','1px solid ' + config.borderColor);
+						$('#row-' + rowCount + ' td').eq(3).css('border-right','1px solid ' + config.borderColor);
+					}
 					headerCount++;
 				});
 				rowCount++;
 			};
+
+			//Bold First Row if Set
+			if(config.firstRowBold){
+				$('#row-1').css('font-weight','bold');
+			}
 		}
 	}
 });
 
-//Number formatter
-function numberFormatter(params) {
-	if(!isNaN(params.value)){
-		return Math.floor(params.value).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
-	} else {
-		return params.value;
-	}
-}
-
-function sizeColumnsToFit(params) {
-    params.api.sizeColumnsToFit();
-}
