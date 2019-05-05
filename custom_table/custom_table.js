@@ -2,25 +2,41 @@ looker.plugins.visualizations.add({
 	id: "custom-table",
 	label: "Custom Table",
 	options: {
+		alternateRowColorOne: {
+                        label: "Alternate Row Color 1",
+                        type: "array",
+                        display: "colors",
+                        default: ["white"],
+                        section: "   Display",
+                        order: 1
+                },
+		alternateRowColorTwo: {
+                        label: "Alternate Row Color 2",
+                        type: "array",
+                        display: "colors",
+                        default: ["#ececec"],
+                        section: "   Display",
+                        order: 2
+                },
 		title: {
 			label: "Title",
 			type: "boolean",
 			default: true,
-			section: " Title",
+			section: "  Title",
 			order: 1
 		},
 		titleText: {
 			label: "Title Text",
 			type: "string",
 			default: "Title",
-			section: " Title",
+			section: "  Title",
 			order: 2
 		},
 		titleTextSize: {
                         label: "Title Text Size",
                         type: "string",
                         default: "12px",
-                        section: " Title",
+                        section: "  Title",
                         order: 3
                 },
 		titleTextColor: {
@@ -28,7 +44,7 @@ looker.plugins.visualizations.add({
 			type: "array",
 			display: "colors",
 			default: ["white"],
-			section: " Title",
+			section: "  Title",
 			order: 4
 		},	
 		titleBackgroundColor: {
@@ -36,35 +52,35 @@ looker.plugins.visualizations.add({
 			type: "array",
 			display: "colors",
 			default: ["#002e6d"],
-			section: " Title",
+			section: "  Title",
 			order: 5
 		},
 		subtitle: {
 			label: "Subtitle",
                         type: "boolean",
                         default: false,
-                        section: "Subtitle",
+                        section: " Subtitle",
                         order: 1
 		},
 		subtitleCols: {
 			label: "Subtitle Columns",
 			type: "string",
 			default: "2",
-			section: "Subtitle",
+			section: " Subtitle",
 			order: 2
 		},
 		subtitleText: {
                         label: "Title Text",
                         type: "string",
                         default: "Col1|Col2",
-			section: "Subtitle",
+			section: " Subtitle",
                         order: 3
                 },
                 subtitleTextSize: {
                         label: "Title Text Size",
                         type: "string",
                         default: "12px",
-                        section: "Subtitle",
+                        section: " Subtitle",
                         order: 4
                 },
                 subtitleTextColor: {
@@ -72,7 +88,7 @@ looker.plugins.visualizations.add({
                         type: "array",
                         display: "colors",
                         default: ["black"],
-                        section: "Subtitle",
+                        section: " Subtitle",
                         order: 5
                 },
                 subtitleBackgroundColor: {
@@ -80,9 +96,32 @@ looker.plugins.visualizations.add({
                         type: "array",
                         display: "colors",
                         default: ["#fcf2c0"],
-                        section: "Subtitle",
+                        section: " Subtitle",
                         order: 6
-                }
+                },
+		headers: {
+                        label: "Headers",
+                        type: "boolean",
+                        default: true,
+                        section: "Headers",
+                        order: 1
+                },		
+                headerTextColor: {
+                        label: "Text Color",
+                        type: "array",
+                        display: "colors",
+                        default: ["black"],
+                        section: "Headers",
+                        order: 2
+                },
+                headerBackgroundColor: {
+                        label: "Background Color",
+                        type: "array",
+                        display: "colors",
+                        default: ["#ececec"],
+                        section: "Headers",
+                        order: 3
+                },
 	},
 
 	create: function(element,config) {
@@ -120,7 +159,7 @@ looker.plugins.visualizations.add({
 
 		var subtitleCols = config.subtitleCols;
 		if(config.title){
-			$('.myTable').append('<tr style="background-color:' + config.titleBackgroundColor  + ';"><th style="text-align:center;color:' + config.titleTextColor  +';font-size:' + config.titleTextSize  + ';" colspan=' + subtitleCols  + '>' + config.titleText + '</th></tr>');
+			$('.myTable').append('<tr style="background-color:' + config.titleBackgroundColor  + ';"><th class="titleTable" style="text-align:center;color:' + config.titleTextColor  +';font-size:' + config.titleTextSize  + ';" colspan=' + subtitleCols + '>' + config.titleText + '</th></tr>');
 		}
 		var subtitleArray = config.subtitleText.split('|');
 		if(config.subtitle){
@@ -131,22 +170,65 @@ looker.plugins.visualizations.add({
 		}
 
 		if(data.length > 0){
+			var headers = Object.keys(data[0]);
 			var headerLabels = [];
+
+			//update title column span to length of data
+			$('.titleTable').attr('colspan',headers.length);
+
+			//Update subtitle column span
+			var subSpan = headers.length / subtitleArray.length,
+			    subSpanFloor = Math.floor(headers.length / subtitleArray.length), 
+			    subSpanCeil = Math.ceil(headers.length / subtitleArray.length);	
+			if(headers.length % 2 == 0){
+				$('.subtitleTable td').attr('colspan',subSpan);
+			} else {
+				$('.subtitleTable td').first().attr('colspan',subSpanCeil);
+				$('.subtitleTable td:not(:first)').attr('colspan',subSpanFloor);
+			}
+
+			//Get header labels
+			var dimensionCount = 0,
+			    measureCount = 0;
 			queryResponse.fields.dimensions.forEach(function(dimension){
 				headerLabels.push(dimension.label_short);
+				dimensionCount++;
 			});
 			queryResponse.fields.measures.forEach(function(measure){
                                 headerLabels.push(measure.label_short);
-                        });
-
-			headerLabels.forEach(function(header){
+                        	measureCount++;
 			});
 
-			var rowData = [];
-			//Get Data
-			for(var row of data){
-			};
+			//Add headers if enabled
+			if(config.headers){
+				$('.myTable').append('<tr class="headerRow" style="background-color:' + config.headerBackgroundColor + ';"></tr>');
+				headerLabels.forEach(function(header){
+					$('.headerRow').append('<th style="text-align:left;color:' + config.headerTextColor + ';">' + header + '</th>');
+				});
+			}
 
+			//Add Rows
+			var rowCount = 1;	
+			for(var row of data){
+				console.log(rowCount % 2);
+				if(rowCount % 2 == 1){
+					$('.myTable').append('<tr id="row-' + rowCount + '" style="background-color:' + config.alternateRowColorOne + ';"></tr>');
+				} else {
+					$('.myTable').append('<tr id="row-' + rowCount + '" style="background-color:' + config.alternateRowColorTwo + ';"></tr>');
+				}
+				var headerCount = 1;
+				headers.forEach(function(header){
+					if(row[header].rendered){
+						$('#row-' + rowCount).append('<td style="text-align:right;color:;">' + row[header].rendered  + '</td>');		
+					} else if(headerCount <= dimensionCount){
+							$('#row-' + rowCount).append('<td style="text-align:left;color:;">' + row[header].value  + '</td>');	
+					       } else {
+							$('#row-' + rowCount).append('<td style="text-align:right;color:;">' + row[header].value  + '</td>');
+					       }
+					headerCount++;
+				});
+				rowCount++;
+			};
 		}
 	}
 });
