@@ -130,7 +130,7 @@ looker.plugins.visualizations.add({
 		//Allow multiple grids on a dashboard
 		var classRand = 0,
 		    found = false;
-
+		
 		$('div').each(function(){
 			if($(this).attr('class')){
 				if($(this).attr('class').match(/myGrid/) && !found){
@@ -240,7 +240,19 @@ looker.plugins.visualizations.add({
 									delete obj[i];
 								}
 							}
-							objKeys = Object.keys(obj),
+							//Sort JSON Parsed Object
+							var sorted = {},
+							key, a = [];
+							for (key in obj) {
+								if (obj.hasOwnProperty(key)) {
+									a.push(key);
+								}
+							}
+							a.sort();
+							for (key = 0; key < a.length; key++) {
+								sorted[a[key]] = obj[a[key]];
+							}
+							objKeys = Object.keys(sorted),
 							jsonField = true;
 						}
 					}
@@ -409,9 +421,11 @@ looker.plugins.visualizations.add({
 				enableRangeSelection: true,
 				rowDragManaged: true,
 				suppressAggFuncInHeader: true,
+				//groupRemoveLowestSingleChildren: true,
 				getContextMenuItems: function (params) {
     					var result = [
 					'copy',
+					'copyWithHeaders',
 					'separator',
         				{
             					name: 'CSV Export',
