@@ -49,10 +49,17 @@ looker.plugins.visualizations.add({
 		jsonParse: {
 			label: "JSON Parse",
 			type: "boolean",
-			default: "false",
+			default: false,
 			section: " Display",
 			order: 10
 		},
+		rowLimitAlert: {
+                        label: "5,000 Row Limit Alert",
+                        type: "boolean",
+                        default: false,
+                        section: " Display",
+                        order: 11
+                },
 		groupable: {
 			label: "Groupable",
                         type: "boolean",
@@ -458,6 +465,11 @@ looker.plugins.visualizations.add({
 			agGrid.LicenseManager.setLicenseKey("Evaluation_License-_Not_For_Production_Valid_Until_25_April_2019__MTU1NjE0NjgwMDAwMA==5095db85700c871b2d29d9537cd451b3");
 			// create the grid passing in the div to use together with the columns & data we want to use
 			new agGrid.Grid(eGridDiv, gridOptions);
+
+			//Alert if row limit alerter turned on
+			if(config.rowLimitAlert && data.length == 5000){
+				$('#row-limit-alert').html('5,000 record limit reached! We recommend limiting the date range to retrieve a full set of data.');
+			} 
 		}
 	}
 });
