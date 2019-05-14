@@ -54,7 +54,7 @@ looker.plugins.visualizations.add({
 			order: 10
 		},
 		rowLimitAlert: {
-                        label: "5,000 Row Limit Alert",
+                        label: "5,000 Record Limit Alert",
                         type: "boolean",
                         default: false,
                         section: " Display",
@@ -94,21 +94,21 @@ looker.plugins.visualizations.add({
                         type: "boolean",
                         default: false,
                         section: "Column Headers",
-                        order: 3
+                        order: 5
 		},
 		autoSizeColumns: {
 			label: "Auto-Size Columns",
 			type: "boolean",
 			default: true,
 			section: "Column Headers",
-			order: 6
+			order: 7
 		},
 		sizeColToFit: {
                         label: "Size Columns to Fit Screen",
                         type: "boolean",
                         default: false,
                         section: "Column Headers",
-                        order: 5
+                        order: 6
                 },
 		columnGroupNames: {
 			label: "Column Group Names",
@@ -125,6 +125,14 @@ looker.plugins.visualizations.add({
                         placeholder: "1,2|3,4,5|6",
                         section: "Column Headers",
                         order: 3
+                },
+		columnHeaderColor: {
+                        label: "Header Color",
+                        type: "array",
+                        display: "colors",
+                        default: ["#f5f7f7"],
+                        section: "Column Headers",
+                        order: 4
                 },
 	},
 
@@ -153,6 +161,15 @@ looker.plugins.visualizations.add({
     				.ag-row-group {
         				font-weight: bold;
     				}
+
+				.` + config.theme + ` .ag-header-group-cell-label span {
+    					margin-left: 46%;
+					font-weight: bold;
+				}
+
+				.column-header-class {
+					background-color: ` + config.columnHeaderColor + `;
+				}
 			</style>`;
 
 		$('.parentGrid').remove();	
@@ -184,53 +201,72 @@ looker.plugins.visualizations.add({
                 }
 
 		if(data.length > 0){
-			var headerLabels = [];
+			var headerLabels = [],
+			    headerNames = [],
+			    dimensionNames = [];			
 			queryResponse.fields.dimensions.forEach(function(dimension){
 				headerLabels.push(dimension.label_short);
+				headerNames.push(dimension.name);
+				dimensionNames.push(dimension.name);
 			});
 			queryResponse.fields.measures.forEach(function(measure){
                                 headerLabels.push(measure.label_short);
+				headerNames.push(measure.name);
                         });
+			queryResponse.fields.table_calculations.forEach(function(tableCalc){
+                                headerLabels.push(tableCalc.label);
+                                headerNames.push(tableCalc.name);
+                        });			
 
 			var columnDefs = [];
-			var headers = Object.keys(data[0]);
+			//var headers = Object.keys(data[0]);
+			var headers = headerLabels;
 			var headerCount = 0;
 			var measureCount = queryResponse.fields.measures.length;
 			var measureStartCol = headers.length - measureCount;
 
 			if(config.columnHeader){
 				//Get Column Names
-				var groupNames = config.columnGroupNames.split(",");
-				var groupNums = config.columnGroupNumbers.split("|");
+				var groupNames = stringSplitter(config.columnGroupNames);
+				var groupNums = stringSplitter(config.columnGroupNumbers);
 				var numGroups = groupNames.length;
 				var groupCount = 0;
 
 				groupNames.forEach(function(group){
-					var startCol = groupNums[groupCount].split(",")[0] - 1;
-					if(groupCount < numGroups - 1){
-						var endCol = groupNums[groupCount + 1].split(",")[0] - 1;
-					} else {
-						var endCol = headers.length;
-					}			
+					if(groupNums[groupCount]){
+						var startCol = groupNums[groupCount].split(",")[0] - 1;
+						if(groupCount < numGroups - 1){
+							var endCol = groupNums[groupCount + 1].split(",")[0] - 1;
+						} else {
+							var endCol = headers.length;
+						}			
 						//Account for too large end value
-					if(endCol > headers.length){
-						endCol = headers.length;
+						if(endCol > headers.length){
+							endCol = headers.length;
+						}
 					}
 					var children = [];
 					for(var i=startCol;i < endCol;i++){
-						var headerClean = headers[i].substr(headers[i].indexOf('.')+1).split("_").join(" ").initCap();
-						children.push({ headerName: headerClean, field: headerClean, sortable: config.sortable, filter: config.filterable, valueFormatter: numberFormatter });
+						var headerClean = headerNames[i].substr(headerNames[i].indexOf('.')+1).split("_").join(" ").initCap();
+						
+						if(i >= dimensionNames.length){
+							//Right align measures
+							children.push({ headerName: headerLabels[i], field: headerClean, sortable: config.sortable, filter: config.filterable, valueFormatter: numberFormatter, type: "numericColumn" });
+						} else {
+							children.push({ headerName: headerLabels[i], field: headerClean, sortable: config.sortable, filter: config.filterable, valueFormatter: numberFormatter });
+						}
 					}
-
+					
 					columnDefs.push({
 						headerName: group,
+						headerClass: 'column-header-class',
 						children: children
 					});
 					groupCount++;
 				});
 			} else {	
 				//Get Column Names
-				headers.forEach(function(header){
+				headerNames.forEach(function(header){
 					var pinCols = config.columnPin;
 					var headerClean = header.substr(header.indexOf('.')+1).split("_").join(" ").initCap();
 					var rowDrag = false;
@@ -342,7 +378,7 @@ looker.plugins.visualizations.add({
 			for(var row of data){
 				var currObj = {};
 				var headerCount = 0;
-				headers.forEach(function(header) {
+				headerNames.forEach(function(header) {
 					var value = row[header].value;
 					jsonField = false;
 					if(value != null && (typeof value === 'string' || value instanceof String)){
@@ -361,25 +397,56 @@ looker.plugins.visualizations.add({
 							count++;
 						});
 					} else {
-
 						var headerClean = header.substr(header.indexOf('.')+1).split("_").join(" ").initCap();
-						if(row[header].rendered){
-							if(row[header].rendered.charAt(0) == '$' || row[header].rendered.charAt(1) == '$' ){
-								currObj[headerClean] = row[header].rendered;	
+						if(row[header].html){
+							currObj[headerClean] = row[header].html;
+						} else if(row[header].rendered){
+								if(row[header].rendered.charAt(0) == '$' || row[header].rendered.charAt(1) == '$' ){
+									currObj[headerClean] = row[header].rendered;	
+								} else if(row[header].rendered.includes('%')){
+									currObj[headerClean] = row[header].rendered;
+								} else {
+									currObj[headerClean] = row[header].value;
+								}
 							} else {
+								if(headerCount == 0){
+									exportFileName = row[header].value;
+								}
 								currObj[headerClean] = row[header].value;
-							}
-						} else {
-							if(headerCount == 0){
-								exportFileName = row[header].value;
-							}
-							currObj[headerClean] = row[header].value;
-						}
+							}	
 					}
 					headerCount++;
 				});
 				rowData.push(currObj);
 			};
+			
+			//Total Row
+			if(queryResponse.has_totals){
+				var currObj = {};
+				//Get first dimension to insert "Totals"
+				if(dimensionNames.length > 0){
+					var totalHeaderClean = dimensionNames[0].substr(dimensionNames[0].indexOf('.')+1).split("_").join(" ").initCap();
+					currObj[totalHeaderClean] = 'Totals:'; 
+				}
+
+				for(property in queryResponse.totals_data){
+					var headerClean = property.substr(property.indexOf('.')+1).split("_").join(" ").initCap();
+					if(queryResponse.totals_data[property].html){
+						currObj[headerClean] = queryResponse.totals_data[property].html;
+					} else if(queryResponse.totals_data[property].rendered){
+							if(queryResponse.totals_data[property].rendered.charAt(0) == '$' || queryResponse.totals_data[property].rendered.charAt(1) == '$' ){
+								currObj[headerClean] = queryResponse.totals_data[property].rendered;
+							} else if(queryResponse.totals_data[property].rendered.includes('%')){
+								currObj[headerClean] = queryResponse.totals_data[property].rendered;
+							} else {
+								currObj[headerClean] = queryResponse.totals_data[property].value;
+							}
+						} else {
+							currObj[headerClean] = queryResponse.totals_data[property].value;
+						}
+				}
+				rowData.push(currObj);				
+			}
 
 			var today = new Date();
 			var dd = String(today.getDate()).padStart(2, '0');
@@ -394,7 +461,6 @@ looker.plugins.visualizations.add({
 			}
 
 			var firstHeaderClean = headers[0].substr(headers[0].indexOf('.')+1).split("_").join(" ").initCap();
-			//var firstHeaderClean = columnDefs[0].headerName;
 			
 			// let the grid know which columns and what data to use
 			var gridOptions = {
@@ -404,17 +470,19 @@ looker.plugins.visualizations.add({
         					allColumnIds.push(column.colId);
     					});
 					if(config.autoSizeColumns){
-    						gridOptions.columnApi.autoSizeColumns(allColumnIds);	
+						gridOptions.columnApi.autoSizeColumns(allColumnIds);	
 					} else if(config.sizeColToFit){
 						gridOptions.api.sizeColumnsToFit();
+					}
+					if(queryResponse.has_totals){
+						$('.ag-theme-balham .ag-row.ag-row-last').css('font-weight','bold');
+						$('.ag-theme-balham .ag-row.ag-row-last').css('border-top-width','3px');	
 					}
 				},
 				groupSelectsChildren: true,
 				groupDefaultExpanded: expand,
 				autoGroupColumnDef: {
 					headerName: config.rowGroupLabel,
-					//field: firstHeaderClean,
-					//width: 250,
 					editable: false,
 				},
 				defaultColDef: {
@@ -428,7 +496,7 @@ looker.plugins.visualizations.add({
 				enableRangeSelection: true,
 				rowDragManaged: true,
 				suppressAggFuncInHeader: true,
-				//groupRemoveLowestSingleChildren: true,
+				suppressColumnVirtualisation: true,
 				getContextMenuItems: function (params) {
     					var result = [
 					'copy',
@@ -465,7 +533,7 @@ looker.plugins.visualizations.add({
 			agGrid.LicenseManager.setLicenseKey("Evaluation_License-_Not_For_Production_Valid_Until_25_April_2019__MTU1NjE0NjgwMDAwMA==5095db85700c871b2d29d9537cd451b3");
 			// create the grid passing in the div to use together with the columns & data we want to use
 			new agGrid.Grid(eGridDiv, gridOptions);
-
+			
 			//Alert if row limit alerter turned on
 			if(config.rowLimitAlert && data.length == 5000){
 				$('#row-limit-alert').html('5,000 record limit reached! We recommend limiting the date range to retrieve a full set of data.');
@@ -485,4 +553,14 @@ function numberFormatter(params) {
 
 function sizeColumnsToFit(params) {
     params.api.sizeColumnsToFit();
+}
+
+function stringSplitter(param) {
+	var splitArray = [];
+	if(param.includes(",")) {
+		splitArray = param.split(",");
+	} else if(param.includes("|")) {
+		splitArray = param.split("|");
+	}
+	return splitArray;
 }
