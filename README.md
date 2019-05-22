@@ -8,7 +8,7 @@
 ![Collapsible Tree Metric Image](https://github.mlbam.net/EIS/eis-looker-custom-visualizations/blob/master/baseball_card/baseball_card.png)
 
 #  ag-Grid
-![ag-Grid Image](https://github.mlbam.net/EIS/eis-looker-custom-visualizations/blob/master/ag_grid2/ag_grid.png)
+![ag-Grid Image](https://github.mlbam.net/EIS/eis-looker-custom-visualizations/blob/master/ag_grid2/ag_grid.PNG)
 
 #  Custom Table
 ![Custom Table Image](https://github.mlbam.net/EIS/eis-looker-custom-visualizations/blob/master/custom_table/custom_table.png)
