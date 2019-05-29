@@ -1,5 +1,5 @@
 #  Collapsible Tree Metric
-![Collapsible Tree Metric Image](https://github.mlbam.net/EIS/eis-looker-custom-visualizations/blob/master/collapsible_tree_metric/collapsible_tree_metric.PNG)
+![Collapsible Tree Metric Image](collapsible_tree_metric.PNG)
 
 **How it works:**
 1. Create a view containing the data set including n dimensions and one measure.     
