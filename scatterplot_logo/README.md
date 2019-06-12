@@ -1,5 +1,5 @@
 #  Scatterplot Logo
-![Scatterplot Logo](scatterplot_logo.png)
+![Scatterplot Logo](https://github.mlbam.net/EIS/eis-looker-custom-visualizations/blob/master/scatterplot_logo/scatterplot_logo.png)
 
 **How it works:**
 This visualizations accepts two dimensions and two measures or table calculations. The column order should be as follows:
@@ -10,4 +10,4 @@ This visualizations accepts two dimensions and two measures or table calculation
 4. **Measure/Table Calc** - The value that is displayed on the y-axis
 
 **For Example:**
-![Scatterplot Logo Data](scatterplot_logo_data.png)
+![Scatterplot Logo Data](https://github.mlbam.net/EIS/eis-looker-custom-visualizations/blob/master/scatterplot_logo/scatterplot_logo_data.png)

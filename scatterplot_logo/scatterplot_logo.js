@@ -31,12 +31,33 @@ looker.plugins.visualizations.add({
                         section: "x-Axis",
                         order: 1
                 },
+		xCustomStart: {
+                        label: "Custom Origin",
+                        type: "boolean",
+                        default: false,
+                        section: "x-Axis",
+                        order: 2
+                },
+                xCustomStartValue: {
+                        label: "Custom Origin Value",
+                        type: "string",
+                        default: "0",
+                        section: "x-Axis",
+                        order: 3
+                },
 		xMeanRefLine: {
                         label: "Mean Reference Line",
                         type: "boolean",
                         default: false,
                         section: "x-Axis",
-                        order: 2
+                        order: 4
+                },
+		xOriginLine: {
+                        label: "Origin Line",
+                        type: "boolean",
+                        default: false,
+                        section: "x-Axis",
+                        order: 5
                 },
 		yAxisLabel: {
 			label: "y-Axis Label",
@@ -52,12 +73,33 @@ looker.plugins.visualizations.add({
                         section: "y-Axis",
                         order: 1
                 },
+		yCustomStart: {
+                        label: "Custom Origin",
+                        type: "boolean",
+                        default: false,
+                        section: "y-Axis",
+                        order: 2
+                },
+		yCustomStartValue: {
+                        label: "Custom Origin Value",
+                        type: "string",
+                        default: "0",
+                        section: "y-Axis",
+                        order: 3
+                },
 		yMeanRefLine: {
                         label: "Mean Reference Line",
                         type: "boolean",
                         default: false,
                         section: "y-Axis",
-                        order: 2
+                        order: 4
+                },
+		yOriginLine: {
+                        label: "Origin Line",
+                        type: "boolean",
+                        default: false,
+                        section: "y-Axis",
+                        order: 5
                 }
 	},
 
@@ -128,6 +170,13 @@ looker.plugins.visualizations.add({
         		  stroke-width: 1.0px;
         		  stroke-dasharray: 5,15;
     			}
+
+			.originline {
+                          fill: none;
+                          stroke: black;
+                          stroke-width: 1.0px;
+                        }
+
 		</style>`
 
 		//Create asscciate arrays
@@ -218,8 +267,16 @@ looker.plugins.visualizations.add({
 		    .style("opacity", 0);
 
 		// don't want dots overlapping axis, so add in buffer to data domain
-		xScale.domain([d3.min(data, xValue)-1, d3.max(data, xValue)+1]);
-		yScale.domain([d3.min(data, yValue)-1, d3.max(data, yValue)+1]);
+		if(config.xCustomStart){
+			xScale.domain([config.xCustomStartValue, d3.max(data, xValue)+1]);
+		} else {
+			xScale.domain([d3.min(data, xValue)-1, d3.max(data, xValue)+1]);
+		}
+		if(config.yCustomStart){
+			yScale.domain([config.yCustomStartValue, d3.max(data, yValue)+1]);
+		} else {
+			yScale.domain([d3.min(data, yValue)-1, d3.max(data, yValue)+1]);
+		}
 
 		// x-axis
 		svg.append("g")
@@ -230,6 +287,7 @@ looker.plugins.visualizations.add({
 		    .attr("class", "label")
 		    .attr("x", width)
 		    .attr("y", -2)
+		    .attr("dy", "-.6em")
 		    .style({"text-anchor":"end","stroke-width":"1px"})
 		    .text(config.xAxisLabel);
 
@@ -266,6 +324,29 @@ looker.plugins.visualizations.add({
   		    	  .attr("y2", height)
   		    	  .attr("class", "refline")
 		}
+
+		//horizontal origin line
+		if(config.yOriginLine){
+                        svg.append("svg:line")
+                          .data([0])
+                          .attr("x1", 0)
+                          .attr("y1", yRefMap)
+                          .attr("x2", width)
+                          .attr("y2", yRefMap)
+                          .attr("class", "originline")
+                }
+
+
+		/* vertical origin line */
+                if(config.xOriginLine){
+                        svg.append("svg:line")
+                          .data([0])
+                          .attr("x1", xRefMap)
+                          .attr("y1", 0)
+                          .attr("x2", xRefMap)
+                          .attr("y2", height)
+                          .attr("class", "originline")
+                }
 	
 		// add the X gridlines	
 		if(config.xGridLines){
@@ -312,14 +393,7 @@ looker.plugins.visualizations.add({
 			 tooltip.transition()
 			     .duration(500)
 			     .style("opacity", 0);
-		    });// add the Y gridlines
-                d3.selectAll("g.y g")
-                  .append("line")
-                  .attr("class", "gridline")
-                  .attr("x1", 0)
-                  .attr("y1", 0)
-                  .attr("x2", width)
-                  .attr("y2", 0);
+		    });
 	}
 });
 
