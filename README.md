@@ -7,6 +7,10 @@
 #  Baseball Card
 ![Collapsible Tree Metric Image](https://github.com/gcalvo1/looker-custom-visualizations/blob/master/baseball_card/baseball_card.png)
 
+#  Boxplot
+<p> Including the ability to group boxes with a pivoted dimension </p>
+![Boxplot Image](https://github.com/gcalvo1/looker-custom-visualizations/blob/master/boxplot/boxplot.png)
+
 #  Collapsible Tree Metric
 ![Collapsible Tree Metric Image](https://github.com/gcalvo1/looker-custom-visualizations/blob/master/collapsible_tree_metric/collapsible_tree_metric.PNG)
 
